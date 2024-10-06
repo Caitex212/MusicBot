@@ -45,10 +45,11 @@
             <version>4.4.1_353</version>
         </dependency>
         <dependency>
-		    <groupId>com.github.Nagami-Yukki</groupId>
-		    <artifactId>JDA-Utilities</artifactId>
-		    <version>1.0</version>
-		</dependency>
+            <groupId>com.jagrosh</groupId>
+            <artifactId>jda-utilities</artifactId>
+            <version>3.0.5</version>
+            <type>pom</type>
+        </dependency>
 
         <!-- Music Dependencies -->
         <dependency>
