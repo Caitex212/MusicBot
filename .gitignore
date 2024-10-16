@@ -5,3 +5,4 @@
 *.json
 *.txt
 nb*.xml
+/vosk-model-small-de-0.15/

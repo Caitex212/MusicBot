@@ -15,6 +15,7 @@
  */
 package com.jagrosh.jmusicbot.audio;
 
+import com.jagrosh.jmusicbot.Voice;
 import com.jagrosh.jmusicbot.playlist.PlaylistLoader.Playlist;
 import com.jagrosh.jmusicbot.queue.AbstractQueue;
 import com.jagrosh.jmusicbot.settings.QueueType;
@@ -33,6 +34,8 @@ import java.util.Set;
 import com.jagrosh.jmusicbot.settings.Settings;
 import com.jagrosh.jmusicbot.utils.FormatUtil;
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioTrack;
+
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
@@ -60,17 +63,31 @@ public class AudioHandler extends AudioEventAdapter implements AudioSendHandler
     private final PlayerManager manager;
     private final AudioPlayer audioPlayer;
     private final long guildId;
+    private final Guild guild;
     
     private AudioFrame lastFrame;
     private AbstractQueue<QueuedTrack> queue;
+    
+    private Voice voice;
 
     protected AudioHandler(PlayerManager manager, Guild guild, AudioPlayer player)
     {
         this.manager = manager;
         this.audioPlayer = player;
         this.guildId = guild.getIdLong();
+        this.guild = guild;
 
         this.setQueueType(manager.getBot().getSettingsManager().getSettings(guildId).getQueueType());
+        initializeVoice();
+    }
+    
+    private void initializeVoice() {
+        try {
+            voice = new Voice();
+            guild.getAudioManager().setReceivingHandler(voice);
+        } catch (IOException e) {
+        	System.out.println("Failed to initialize Voice handler for guild: " + guild.getName());
+        }
     }
 
     public void setQueueType(QueueType type)
