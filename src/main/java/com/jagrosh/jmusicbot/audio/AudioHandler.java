@@ -35,7 +35,6 @@ import com.jagrosh.jmusicbot.settings.Settings;
 import com.jagrosh.jmusicbot.utils.FormatUtil;
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioTrack;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
@@ -83,10 +82,12 @@ public class AudioHandler extends AudioEventAdapter implements AudioSendHandler
     
     private void initializeVoice() {
         try {
+            System.out.println("Initializing Voice Recognition");
             voice = new Voice();
             guild.getAudioManager().setReceivingHandler(voice);
-        } catch (IOException e) {
-        	System.out.println("Failed to initialize Voice handler for guild: " + guild.getName());
+        } catch (Exception e) {
+            System.out.println("Failed to initialize Voice handler for guild: " + guild.getName());
+            e.printStackTrace();
         }
     }
 
