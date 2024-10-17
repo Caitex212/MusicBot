@@ -83,7 +83,7 @@ public class AudioHandler extends AudioEventAdapter implements AudioSendHandler
     private void initializeVoice() {
         try {
             System.out.println("Initializing Voice Recognition");
-            voice = new Voice();
+            voice = new Voice(guild, manager.getBot());
             guild.getAudioManager().setReceivingHandler(voice);
         } catch (Exception e) {
             System.out.println("Failed to initialize Voice handler for guild: " + guild.getName());

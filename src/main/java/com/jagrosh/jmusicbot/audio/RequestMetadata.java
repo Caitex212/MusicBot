@@ -50,6 +50,11 @@ public class RequestMetadata
         return new RequestMetadata(event.getAuthor(), new RequestInfo(event.getArgs(), track.getInfo().uri));
     }
     
+    public static RequestMetadata fromResultHandlerCustom(AudioTrack track, User customUser, String songTitle)
+    {
+        return new RequestMetadata(customUser, new RequestInfo(songTitle, track.getInfo().uri));
+    }
+    
     public static class RequestInfo
     {
         public final String query, url;
