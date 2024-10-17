@@ -127,23 +127,19 @@ public class Voice implements AudioReceiveHandler {
             }
         }
     }
-
-    // Start a timeout to check for final result after a period of silence
     private void startTimeout() {
         timeoutTimer = new Timer();
         timeoutTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                // Call getFinalResult if no new audio data is received in a while
                 String finalResult = recognizer.getFinalResult();
                 System.out.println("Final result from timeout: " + finalResult);
                 handleCommand(finalResult);
-                stopTimeout(); // Stop the timer after use
+                stopTimeout();
             }
-        }, 2000); // Adjust timeout duration as needed (3000ms = 3 seconds)
+        }, 2000);
     }
 
-    // Reset the timeout if new audio data is received
     private void resetTimeout() {
         stopTimeout();
         startTimeout();
@@ -158,7 +154,7 @@ public class Voice implements AudioReceiveHandler {
     }
     
     private void playSong(String songTitle) {
-        User fakeUser = new FakeUser("1234567890", "Vosk"); // Create a fake user for the command
+        User fakeUser = new FakeUser("1234567890", "Vosk");
         bot.getPlayerManager().loadItemOrdered(guild, songTitle, new ResultHandler(false, guild, songTitle, fakeUser)); // Pass the fake user here
     }
 
@@ -177,7 +173,7 @@ public class Voice implements AudioReceiveHandler {
 
         private void loadSingle(AudioTrack track) {
             if (bot.getConfig().isTooLong(track)) {
-                return; // Skip if the track is too long
+                return;
             }
             AudioHandler handler = (AudioHandler) guild.getAudioManager().getSendingHandler();
             int pos = handler.addTrack(new QueuedTrack(track, RequestMetadata.fromResultHandlerCustom(track, fakeUser, songTitle))) + 1; // Use customEvent
@@ -198,7 +194,7 @@ public class Voice implements AudioReceiveHandler {
 
         @Override
         public void trackLoaded(AudioTrack track) {
-            loadSingle(track); // Load the single track
+            loadSingle(track);
         }
 
         @Override
@@ -244,7 +240,6 @@ public class Voice implements AudioReceiveHandler {
             this.name = name;
         }
 
-        // Implement necessary User methods
         @Override
         public String getId() {
             return id;
@@ -255,25 +250,21 @@ public class Voice implements AudioReceiveHandler {
             return name;
         }
 
-        // Implement other required methods from User interface
         @Override
         public String getAvatarId() {
-            return null; // or return a default avatar ID
+            return null;
         }
 
         @Override
         public String getDiscriminator() {
-            return "0000"; // example discriminator
+            return "0000";
         }
 
         @Override
         public boolean isBot() {
-            return false; // or true if you want to simulate a bot
+            return false;
         }
 
-        // Add other methods as needed...
-
-        // Override equals() and hashCode() for proper functioning
         @Override
         public boolean equals(Object obj) {
             if (this == obj) return true;
@@ -289,73 +280,61 @@ public class Voice implements AudioReceiveHandler {
 
 		@Override
 		public String getAsMention() {
-			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
 		public long getIdLong() {
-			// TODO Auto-generated method stub
 			return 0;
 		}
 
 		@Override
 		public String getDefaultAvatarId() {
-			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
 		public RestAction<Profile> retrieveProfile() {
-			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
 		public String getAsTag() {
-			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
 		public boolean hasPrivateChannel() {
-			// TODO Auto-generated method stub
 			return false;
 		}
 
 		@Override
 		public RestAction<PrivateChannel> openPrivateChannel() {
-			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
 		public List<Guild> getMutualGuilds() {
-			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
 		public boolean isSystem() {
-			// TODO Auto-generated method stub
 			return false;
 		}
 
 		@Override
 		public JDA getJDA() {
-			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
 		public EnumSet<UserFlag> getFlags() {
-			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
 		public int getFlagsRaw() {
-			// TODO Auto-generated method stub
 			return 0;
 		}
     }
