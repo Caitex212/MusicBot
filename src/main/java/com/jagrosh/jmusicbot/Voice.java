@@ -14,13 +14,16 @@ import org.vosk.LibVosk;
 import org.vosk.Model;
 import org.json.JSONObject;
 
+import java.util.List;
+import java.util.Arrays;
+
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import com.jagrosh.jmusicbot.audio.AudioHandler;
@@ -37,6 +40,8 @@ public class Voice implements AudioReceiveHandler {
     private Timer timeoutTimer;
     private final Guild guild; // The guild context
     private final Bot bot;
+    
+    private static final List<String> COMMAND_KEYWORDS = Arrays.asList("loki", "logie", "tory");
 
     public Voice(Guild guild, Bot bot) throws IOException {
         // Initialize Vosk
@@ -66,10 +71,11 @@ public class Voice implements AudioReceiveHandler {
             byte[] transcodedData = transcodeVoice(voiceData);
 
             if (recognizer.acceptWaveForm(transcodedData, transcodedData.length)) {
-                String result = recognizer.getResult();
+                String result = new String(recognizer.getResult().getBytes(), StandardCharsets.UTF_8);
                 System.out.println("Final result: " + result);
+                handleCommand(result);
             } else {
-                String partialResult = recognizer.getPartialResult();
+                String partialResult = new String(recognizer.getPartialResult().getBytes(), StandardCharsets.UTF_8);
                 //System.out.println("Partial result: " + partialResult);
                 resetTimeout();
             }
@@ -91,39 +97,88 @@ public class Voice implements AudioReceiveHandler {
     }
 
     private void handleCommand(String resultJson) {
-        JSONObject result = new JSONObject(resultJson);
+    	JSONObject result = new JSONObject(resultJson);
         String text = result.optString("text").toLowerCase();
 
-        if (text.contains("loki")) {
-            String commandPart = text.substring(text.indexOf("loki") + 5).trim();
-            if (!commandPart.isEmpty()) {
-                if (commandPart.startsWith("spiel")) {
-                    String songTitle = commandPart.substring(5).trim();
-                    playSong(songTitle);
-                    System.out.println("Command received: play " + songTitle);
-                } else if (commandPart.startsWith("weiter")) {
-                	AudioHandler handler = (AudioHandler) guild.getAudioManager().getSendingHandler();
-                    if (handler != null && handler.getPlayer().getPlayingTrack() != null && handler.getPlayer().isPaused()) {
-                        handler.getPlayer().setPaused(false);
-                        System.out.println("Resumed playback.");
-                    } else {
-                        System.out.println("No track is currently paused.");
-                    }
-                	
-                    System.out.println("Command received: weiter");
-                } else if (commandPart.startsWith("pause")) {
-                	AudioHandler handler = (AudioHandler) guild.getAudioManager().getSendingHandler();
-                    if (handler != null && handler.getPlayer().getPlayingTrack() != null && handler.getPlayer().isPaused()) {
-                    	System.out.println("No track is currently playing.");
-                    } else {
-                    	handler.getPlayer().setPaused(true);
-                        System.out.println("Paused playback.");
-                    }
-                	
-                    System.out.println("Command received: pause");
-                } else {
-                    System.out.println("Unknown command: " + commandPart);
-                }
+        for (String keyword : COMMAND_KEYWORDS) {
+            if (text.contains(keyword)) {
+                // Extract the command part after the keyword
+                String commandPart = text.substring(text.indexOf(keyword) + keyword.length()).trim();
+                
+	            if (!commandPart.isEmpty()) {
+	                if (commandPart.startsWith("spiel") || commandPart.startsWith("spiele") || commandPart.startsWith("play")) {
+	                    String songTitle = commandPart.substring(5).trim();
+	                    playSong(songTitle);
+	                    System.out.println("Command received: play " + songTitle);
+	                    
+	                } else if (commandPart.startsWith("weiter")) {
+	                	AudioHandler handler = (AudioHandler) guild.getAudioManager().getSendingHandler();
+	                    if (handler != null && handler.getPlayer().getPlayingTrack() != null && handler.getPlayer().isPaused()) {
+	                        handler.getPlayer().setPaused(false);
+	                        System.out.println("Resumed playback.");
+	                    } else {
+	                        System.out.println("No track is currently paused.");
+	                    }
+	                	
+	                    System.out.println("Command received: weiter");
+	                    
+	                } else if (commandPart.startsWith("pause")) {
+	                	AudioHandler handler = (AudioHandler) guild.getAudioManager().getSendingHandler();
+	                    if (handler != null && handler.getPlayer().getPlayingTrack() != null && handler.getPlayer().isPaused()) {
+	                    	System.out.println("No track is currently playing.");
+	                    } else {
+	                    	handler.getPlayer().setPaused(true);
+	                        System.out.println("Paused playback.");
+	                    }
+	                	
+	                    System.out.println("Command received: pause");
+	                    
+	                } else if (commandPart.startsWith("nächster") || commandPart.startsWith("skip") || commandPart.startsWith("nächste") || commandPart.startsWith("überspringen") || commandPart.startsWith("next")) {
+	                	 AudioHandler handler = (AudioHandler)guild.getAudioManager().getSendingHandler();
+	                     handler.getPlayer().stopTrack();
+	                	
+	                    System.out.println("Command received: nächster");
+	                    
+	               // ------------------------------------------------------------- Should be last one to prevent false detection
+	                } else if (commandPart.contains("leiser")) {
+	                	 AudioHandler handler = (AudioHandler)guild.getAudioManager().getSendingHandler();
+	                	 int volume = handler.getPlayer().getVolume();
+	                	 if (volume <= 10) {
+	                		 volume = 0;
+	                	 } else {
+	                		 volume -= 10;
+	                	 }
+	                	 handler.getPlayer().setVolume(volume);
+	                    System.out.println("Command received: leiser");
+	                    
+	                } else if (commandPart.contains("lauter")) {
+	                	 AudioHandler handler = (AudioHandler)guild.getAudioManager().getSendingHandler();
+	                	 int volume = handler.getPlayer().getVolume();
+	                	 if (volume >= 90) {
+	                		 volume = 100;
+	                	 } else {
+	                		 volume += 10;
+	                	 }
+	                	 handler.getPlayer().setVolume(volume);
+	                    System.out.println("Command received: lauter");
+	                    
+	                } else if (commandPart.startsWith("lautlos") || commandPart.startsWith("mute")) {
+	                	 AudioHandler handler = (AudioHandler)guild.getAudioManager().getSendingHandler();
+	                	 int volume = 0;
+	                	 handler.getPlayer().setVolume(volume);
+	                    System.out.println("Command received: mute");
+	                    
+	                } else if (commandPart.startsWith("volle lautstärke")) {
+	                	 AudioHandler handler = (AudioHandler)guild.getAudioManager().getSendingHandler();
+	                	 int volume = 100;
+	                	 handler.getPlayer().setVolume(volume);
+	                	 System.out.println("Command received: full volume");
+	                	 
+	                } else {
+	                    System.out.println("Unknown command: " + commandPart);
+	                }
+	            }
+	            break;
             }
         }
     }
@@ -137,7 +192,7 @@ public class Voice implements AudioReceiveHandler {
                 handleCommand(finalResult);
                 stopTimeout();
             }
-        }, 2000);
+        }, 1000);
     }
 
     private void resetTimeout() {
