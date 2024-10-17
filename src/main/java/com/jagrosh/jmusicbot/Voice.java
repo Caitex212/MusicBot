@@ -13,11 +13,13 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class Voice implements AudioReceiveHandler {
     private final Model model;
     private final Recognizer recognizer;
-    private boolean listeningForCommand = false;
+    private Timer timeoutTimer;
 
     public Voice() throws IOException {
         // Initialize Vosk
@@ -49,10 +51,11 @@ public class Voice implements AudioReceiveHandler {
             if (recognizer.acceptWaveForm(transcodedData, transcodedData.length)) {
                 String result = recognizer.getResult();
                 System.out.println("Final result: " + result);
-                handleCommand(result);
             } else {
                 String partialResult = recognizer.getPartialResult();
                 System.out.println("Partial result: " + partialResult);
+                // Restart timeout timer for final result
+                resetTimeout();
             }
         } catch (Exception e) {
             System.err.println("Error processing audio: " + e.getMessage());
@@ -74,23 +77,51 @@ public class Voice implements AudioReceiveHandler {
 
     private void handleCommand(String resultJson) {
         JSONObject result = new JSONObject(resultJson);
-        String text = result.optString("text");
+        String text = result.optString("text").toLowerCase();
 
-        // Handle command recognition logic
-        if (!listeningForCommand) {
-            if (text.toLowerCase().contains("loki")) {
-                listeningForCommand = true;
-                System.out.println("Activation word 'Loki' detected. Listening for command...");
+        // Check if the result contains the keyword 'loki'
+        if (text.contains("loki")) {
+            // Extract the command after "loki"
+            String commandPart = text.substring(text.indexOf("loki") + 5).trim(); // Get text after "loki"
+            if (!commandPart.isEmpty()) {
+                if (commandPart.startsWith("play")) {
+                    // Handle the play command logic
+                    String songTitle = commandPart.substring(5).trim();
+                    System.out.println("Command received: play " + songTitle);
+                    // Here you can add further logic for playing a song, etc.
+                } else {
+                    System.out.println("Unknown command: " + commandPart);
+                }
             }
-        } else {
-            if (text.toLowerCase().startsWith("play")) {
-                String songTitle = text.substring(5);
-                System.out.println("Command received: play " + songTitle);
-                listeningForCommand = false;
-            } else {
-                System.out.println("No valid command detected after activation. Listening reset.");
-                listeningForCommand = false;
+        }
+    }
+
+    // Start a timeout to check for final result after a period of silence
+    private void startTimeout() {
+        timeoutTimer = new Timer();
+        timeoutTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                // Call getFinalResult if no new audio data is received in a while
+                String finalResult = recognizer.getFinalResult();
+                System.out.println("Final result from timeout: " + finalResult);
+                handleCommand(finalResult);
+                stopTimeout(); // Stop the timer after use
             }
+        }, 2000); // Adjust timeout duration as needed (3000ms = 3 seconds)
+    }
+
+    // Reset the timeout if new audio data is received
+    private void resetTimeout() {
+        stopTimeout();
+        startTimeout();
+    }
+
+    // Stop the timeout timer
+    private void stopTimeout() {
+        if (timeoutTimer != null) {
+            timeoutTimer.cancel();
+            timeoutTimer = null;
         }
     }
 
@@ -99,4 +130,3 @@ public class Voice implements AudioReceiveHandler {
         model.close();
     }
 }
-
